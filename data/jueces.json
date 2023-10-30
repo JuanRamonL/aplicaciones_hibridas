@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "nombre": "Arturo",
+    "descripcion": "tipito"
+  },
+  {
+    "id": 2,
+    "nombre": "Sabrina",
+    "descripcion": "minita"
+  },
+  {
+    "id": 4,
+    "nombre": "Maximo",
+    "descripcion": "tipito"
+  },
+  {
+    "id": 4,
+    "nombre": "holis",
+    "descripcion": "tipito"
+  }
+]
