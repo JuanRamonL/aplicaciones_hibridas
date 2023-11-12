@@ -11,7 +11,9 @@
   "type": "module",
   "license": "ISC",
   "dependencies": {
-    "express": "4.18.2"
+    "express": "4.18.2",
+    "mongodb": "^6.2.0",
+    "yup": "^1.3.2"
   },
   "devDependencies": {
     "nodemon": "3.0.1"

@@ -1,49 +1,89 @@
-import { getDatos } from '../services/servicios.js';
+import datosServicios from '../services/servicios.js';
 
 
 function TraerJuecesController(req, res) {
-    getDatos('jueces')
-    .then(jueces => {
-        res.status(200).json(jueces); 
+    datosServicios.getDatos(datosServicios.jueces , req.query)
+    .then(function (jueces) {
+        let lista = '<ul> ' 
+        for(let i = 0; i < jueces.length; i++) {
+            lista += `
+            <li>
+                <ul>
+                    <li>Nombre: ${jueces[i].nombre}</li>
+                </ul> 
+            </li>`
+        }
+        lista += '</ul>'
+
+        res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Mi web</title>
+            <link rel="stylesheet" href="CSS/style.css">
+        </head>
+        <body>
+                ${lista}
+        </body>
+        </html>
+        `)
+        
     })
-    .catch(err => {
-        res.status(500).send('No se pudo leer el archivo');
-    });
 }
 
 function traerJuecesPorIdController(req, res) {
 
-    getDatos('jueces')
-    .then(jueces => {
-        let id = req.params.id;
-        let juez = jueces.find(juez => juez.id == id); //find() Nos permite buscar un elemento en un array. En este caso, buscamos un juego por su id.
-        if(juez && juez.estado !== 'eliminado'){
-            res.status(200).json(juez); 
-        }else{
-            res.status(404).send('Juez no encontrado'); 
+    datosServicios.getDatosById(datosServicios.jueces, req.params.id)
+    .then(function (product) {
+        const Juez=`
+            <div class="productos">
+                <h1>${product.nombre}</h1>
+            </div>
+            `
+        return res.send(`
+            <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Mi web</title>
+            <link rel="stylesheet" href="CSS/style.css">
+        </head>
+        <body>
+                ${Juez}
+        </body>
+        </html>
+        `)
+    })
+    .catch(function (err) {
+        if(err?.code){
+            res.status(err.code).json({msg: err.msg})
+        }
+        else{
+            res.status(500).json({msg: "ta' re quebrado tu  codigo"})
         }
     })
-    .catch(err => {
-        res.status(500).send('No se pudo leer el archivo');
-    });
 }
 
 function agregarJuezController(req, res) {
-    getDatos('jueces')
-    .then(jueces => {
-        let juez = {
-            id: jueces.length + 1,
-            nombre: req.body.nombre,
-            descripcion: req.body.descripcion
-        }
-        jueces.push(juez);
-        fs.writeFile('./data/jueces.json', JSON.stringify(jueces, null, 2));
-        res.status(200).json(juez);
+    return datosServicios.addDatos(datosServicios.jueces ,req.body)
+    .then(function (product) {
+        return res.status(200).json(product)
     })
-    .catch(err => {
-        res.status(500).send('No se pudo leer el archivo');
-    });
+    .catch(function (err) {
+        if(err?.code){
+            res.status(err.code).json({msg: err.msg})
+        }
+        else{
+            res.status(500).json({msg: "ta' re quebrado tu  codigo"})
+        }
+    })
 }
+
+
+
 
 function modificarPutJuecesController(req, res) {
     getDatos('jueces')

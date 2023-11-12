@@ -1,68 +1,110 @@
 
-import { getDatos } from '../services/servicios.js';
+import datosServicios from '../services/servicios.js';
 
 function traerJuegosController(req, res) {
     
-    getDatos('juegos')
-    .then(juegos => {
-        res.status(200).json(juegos); 
+    datosServicios.getDatos(datosServicios.juegos , req.query)
+    .then(function (products) {
+        let lista = '<ul> ' 
+        for(let i = 0; i < products.length; i++) {
+            lista += `
+            <li>
+                <ul>    
+                    <li>Nombre: ${products[i].nombre}</li>
+                    <li>Descripcion: ${products[i].descripcion}</li>
+                    <li>Genero: ${products[i].genre}</li>
+                    <li>Edicion: ${products[i].edition}</li>
+                    <a href="/games/${products[i]._id}">Ver mas</a>
+                </ul>
+            </li>`
+        }
+        lista += '</ul>'
+
+        res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Mi web</title>
+            <link rel="stylesheet" href="CSS/style.css">
+        </head>
+        <body>
+                ${lista}
+        </body>
+        </html>
+        `)
+        
     })
-    .catch(err => {
-        res.status(500).send('No se pudo leer el archivo');
-    });
 }
 
 function traerJuegosPorIdController(req, res) {
-    getDatos('juegos')
-    .then(juegos => {
-        let id = req.params.id;
-        let juego = juegos.find(juego => juego.id == id); //find() Nos permite buscar un elemento en un array. En este caso, buscamos un juego por su id.
-        if(juego && juego.estado !== 'eliminado'){
-            res.status(200).json(juego); 
-        }else{
-            res.status(404).send('Juego no encontrado'); 
+    datosServicios.getDatosById(datosServicios.juegos, req.params.id)
+    .then(function (product) {
+        const juego=`
+            <div class="productos">
+                <h1>${product.nombre}</h1>
+                <p>${product.descripcion}</p>
+                <p>${product.genre}</p>
+                <p>${product.edition}</p>
+            </div>
+            `
+        return res.send(`
+            <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Mi web</title>
+            <link rel="stylesheet" href="CSS/style.css">
+        </head>
+        <body>
+                ${juego}
+        </body>
+        </html>
+        `)
+    })
+    .catch(function (err) {
+        if(err?.code){
+            res.status(err.code).json({msg: err.msg})
+        }
+        else{
+            res.status(500).json({msg: "ta' re quebrado tu  codigo"})
         }
     })
 }
 
-function modificarPostController(req, res) {
-    getDatos('juegos')
-    .then(juegos => {
-        let juego = {
-            id: juegos.length + 1,
-            nombre: req.body.nombre,
-            descripcion: req.body.descripcion
+function agregarPostController(req, res) {
+    return datosServicios.addDatos(datosServicios.juegos ,req.body)
+    .then(function (product) {
+        return res.status(200).json(product)
+    })
+    .catch(function (err) {
+        if(err?.code){
+            res.status(err.code).json({msg: err.msg})
         }
-        juegos.push(juego);
-        fs.writeFile('./data/juegos.json', JSON.stringify(juegos, null, 2));
-        res.status(200).json(juego);
+        else{
+            res.status(500).json({msg: "ta' re quebrado tu  codigo"})
+        }
     })
 }
+
+
+
 
 function modificarPutController(req, res) {
-    getDatos('juegos')
-    .then(juegos => {
-        let id = req.params.id;
-        let juego = juegos.find(juego => juego.id == id); //find() Nos permite buscar un elemento en un array. En este caso, buscamos un juego por su id.
-        if(juego){
-            juego.nombre = req.body.nombre;
-            juego.descripcion = req.body.descripcion;
-            fs.writeFile('./data/juegos.json', JSON.stringify(juegos, null, 2));
-            res.status(200).json(juego); 
-        }else{
-            throw {
-                status: 404,
-                message: 'Juego no encontrado'
-            };
+    return datosServicios.modificarDatosPut(datosServicios.juegos, req.params.id, req.body)
+    .then(function (product) {
+        return res.status(200).json(product)
+    })
+    .catch(function (err) {
+        if(err?.code){
+            res.status(err.code).json({msg: err.msg})
+        }
+        else{
+            res.status(500).json({msg: "ta' re quebrado tu  codigo"})
         }
     })
-    .catch(err => {
-        if(err.status){
-            res.status(err.status).send(err.message);
-        }else{
-            res.status(500).send('No se pudo modificar el archivo');
-        }
-    });
 }
 
 function modificarPatchController(req, res) {
@@ -129,7 +171,7 @@ function eliminarJuegoController(req, res) {
 export {
     traerJuegosController,
     traerJuegosPorIdController,
-    modificarPostController,
+    agregarPostController,
     modificarPutController,
     modificarPatchController,
     eliminarJuegoController
@@ -138,7 +180,7 @@ export {
 export default {
     traerJuegosController,
     traerJuegosPorIdController,
-    modificarPostController,
+    agregarPostController,
     modificarPutController,
     modificarPatchController,
     eliminarJuegoController

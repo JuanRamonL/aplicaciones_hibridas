@@ -1,24 +1,21 @@
 import express from "express";
 import juegosController from '../controllers/juegos.js';
+import RouteVotos from './votos.js';
 
 const route = express.Router();
 
-route.get('/games', juegosController.traerJuegosController);
+function accedio(req, res, next) {
+    console.log('Accedio ', req.url);
+    next();
+}
 
-//Mostramos un juego en particular
-route.get('/games/:id', juegosController.traerJuegosPorIdController);
-
+route.get('/games', [accedio] ,juegosController.traerJuegosController);
 //Agregamos un juego
-route.post('/games', juegosController.modificarPostController )
+route.post('/games', juegosController.agregarPostController )
+//Mostramos un juego en particular
+route.get('/games/:id',[accedio] , juegosController.traerJuegosPorIdController);
 
-// Reemplazamos un juego en particular -- Ver si es necesario Reemplaza un juego en particular
-route.put('/games/:id', juegosController.modificarPutController);
-
-//Modificamos los datos de un juego en particular
-route.patch('/games/:id', juegosController.modificarPatchController);
-
-//Marcamos un elemento cómo eleimando
-route.delete('/games/:id', juegosController.eliminarJuegoController);
+route.use('/games', RouteVotos);
 
 
 
