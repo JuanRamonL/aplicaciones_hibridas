@@ -1,4 +1,5 @@
 import VotosServicios from '../services/serviciosVotos.js';
+import schemaVotos from '../schemas/votos.js';
 
 function TraerVotosController(req, res) {
     const { id } = req.params
@@ -12,19 +13,38 @@ function TraerVotosController(req, res) {
     })
 }
 
+
 function AgregarVotosController(req, res) {
     const { id } = req.params;
 
-    VotosServicios.addDatosVotos( id, req.body)
-    .then(function(data) {
-        res.json(data);
+    schemaVotos.schemaCrear.validate(req.body, {
+        stripUnknown: true
     })
-    .catch((err) => {
-        res.status(500).json({ error: err });
-    });      
+    .then(async function (value) {
+        return VotosServicios.addDatosVotos( id, value)
+        .then(function (product) {
+            return res.status(200).json(product)
+        })
+        .catch(function (err) {
+            res.status(500).json({msg: "ta' re quebrado tu  codigo", err})
+        })
+    })     
+}
+
+function VotoPorJuezController(req, res) {
+    const { id } = req.params;
+
+    VotosServicios.getDatosVotosPorJuez( id )
+    .then( function(vote) {
+        res.json(vote)
+    })
+    .catch( function(err) {
+        res.status(500).json({ error: "ta' re quebrado tu codigo", err });
+    })
 }
 
 export default {
     TraerVotosController,
-    AgregarVotosController
+    AgregarVotosController,
+    VotoPorJuezController
 }

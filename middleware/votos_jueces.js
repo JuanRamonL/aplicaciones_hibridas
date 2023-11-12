@@ -14,7 +14,7 @@ function juezValido(req, res, next) {
 
 function validacinVotos(req, res, next) {
     // Validamos que el voto de un juez no ezista
-    Voto.findOne({ where: { juezId: req.params.id, juegoId: req.body.juegoId } })
+    Voto.findOne({ where: { juego_id: req.params.id, juez_id: req.body.juegoId } })
         .then(voto => {
             // Si existe el voto
             if (voto) {

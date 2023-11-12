@@ -69,37 +69,42 @@ async function addDatos(db, datos) {
     }
 }
 
-async function modificarDatosPut(db, id, datos) {
-    await client.connect()
-    const datosEnviados = { ...datos }
-
-    await db.updateOne({ _id: ObjectId(id) }, { $set: datosEnviados })
-
-    return datosEnviados
-}
-
 async function modificarDatosPatch(db, id, datos) {
     await client.connect()
-    const datosEnviados = { ...datos }
 
-    await db.updateOne({ _id: ObjectId(id) }, { $set: datosEnviados })
+    const buscarId = await db.findOne({ _id: ObjectId(id) })
 
-    return datosEnviados
+    const nuevoDato = {
+        ...buscarId,
+        ...datos
+    }
+    
+    if (buscarId) {
+        await db.updateOne({ _id: ObjectId(id) }, { $set: nuevoDato })
+    }
+
+    return nuevoDato
+
 }
 
 //Funcion que agrega un estado a uno producto como eliminado
 async function eliminarDatos(db, id) {
     await client.connect()
-
-    await db.updateOne({ _id: ObjectId(id) }, { $set: { estado: 'eliminado' } })
-
-    return true
+    const datos = await db.findOne({ _id: ObjectId(id) })
+    
+    if (datos) {
+        await db.updateOne({ _id: ObjectId(id) }, { $set: { estado: 'eliminado' } })
+    }
+    
+    return datos
 }
 
 export {
     addDatos,
     getDatos,
     getDatosById,
+    modificarDatosPatch,
+    eliminarDatos,
     juegos,
     jueces,
 }
@@ -108,6 +113,8 @@ export default {
     addDatos,
     getDatos,
     getDatosById,
+    modificarDatosPatch,
+    eliminarDatos,
     juegos,
     jueces,
 }

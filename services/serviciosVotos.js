@@ -8,7 +8,7 @@ const votos = db.collection('votes')
 async function getDatosVotos(id){
     await client.connect()
 
-    return votos.find({ juego_id: new ObjectId(id) }).toArray()
+    return votos.find({ id_juego: new ObjectId(id) }).toArray()
 
 }
 
@@ -18,7 +18,7 @@ async function addDatosVotos( id, voto) {
 
     const nuevoVoto = { 
         ...voto, 
-        juego_id: new ObjectId(id) ,
+        id_juego: new ObjectId(id) ,
     }
 
     await votos.insertOne(nuevoVoto)
@@ -26,7 +26,15 @@ async function addDatosVotos( id, voto) {
     return nuevoVoto
 }
 
+async function getDatosVotosPorJuez(id){
+    await client.connect()
+
+    return votos.find({ id_juez: id }).toArray()
+
+}
+
 export default {
     getDatosVotos,
-    addDatosVotos
+    addDatosVotos,
+    getDatosVotosPorJuez
 }
