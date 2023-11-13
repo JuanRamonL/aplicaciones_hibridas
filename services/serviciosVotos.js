@@ -8,23 +8,24 @@ const votos = db.collection('votes')
 async function getDatosVotos(id){
     await client.connect()
 
-    return votos.find({ id_juego: new ObjectId(id) }).toArray()
+    return votos.find({ id_juego: id }).toArray()
 
 }
 
 
-async function addDatosVotos( id, voto) {
-    await client.connect()
+async function addDatosVotos(id, voto) {
+    await client.connect();
 
-    const nuevoVoto = { 
-        ...voto, 
-        id_juego: new ObjectId(id) ,
-    }
+    const nuevoVoto = {
+        ...voto,
+        id_juego: id, // Asigna directamente el valor del ID
+    };
 
-    await votos.insertOne(nuevoVoto)
+    await votos.insertOne(nuevoVoto);
 
-    return nuevoVoto
+    return nuevoVoto;
 }
+
 
 async function getDatosVotosPorJuez(id){
     await client.connect()

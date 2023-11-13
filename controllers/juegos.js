@@ -25,9 +25,9 @@ function traerJuegosController(req, res) {
             lista += `
             <li>
                 <ul>    
-                    <li>Nombre: ${products[i].nombre}</li>
-                    <li>Descripcion: ${products[i].descripcion}</li>
+                    <li>Nombre: ${products[i].name}</li>
                     <li>Genero: ${products[i].genre}</li>
+                    <li>Miembros: ${products[i].members}</li>
                     <li>Edicion: ${products[i].edition}</li>
                     <a href="/games/${products[i]._id}">Ver mas</a>
                 </ul>
@@ -58,34 +58,43 @@ function traerJuegosPorIdController(req, res) {
 
     Promise.all([
         datosServicios.getDatosById(datosServicios.juegos, req.params.id),
-        serviciosVotos.getDatosVotos(req.params.id)
+        serviciosVotos.getDatosVotos(req.params.id),
+        datosServicios.getDatos(datosServicios.jueces),
     ])
     .then(function (results) {
         const product = results[0];
         const votos = results[1];
+        const jueces = results[2];
 
         juego = `
             <div class="productos">
-                <h1>Juego: ${product.nombre}</h1>
-                <p>Descripción <b>${product.descripcion}</b></p>
+                <h1>Juego: ${product.name}</h1>
                 <p>Genero: <b>${product.genre}</b></p>
                 <p>Edición: <b>${product.edition}</b></p>
-                <p>Miembros: <b>${product.members}</b></p>
+                <p>Miembros: ${product.members}</p>
             </div>
         `;
         
         // Construir el HTML para los votos
-        votosJuego = votos.map(voto => `
-            <li style="width:200px; list-style:none">
-                <p>Juez: ${voto.id_juez}</p>
-                <p>Jugabilidad: ${voto.jugabilidad}</p>
-                <p>Arte: ${voto.arte}</p>
-                <p>Sonido:${voto.sonido}</p>
-                <p>Adinidad a la temaica ${voto.afinidad_a_la_tematica}</p>
-                <h2>Total ${voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica}</h2>
-            </li>
+        votosJuego = votos.map(voto => {
+            const juezEncontrado = jueces.find(juez => juez._id == voto.id_juez);
 
-        `).join('');
+            return `
+                <li style="width:200px; list-style:none">
+                    <p>Juez: ${voto.id_juez}</p>
+                    <p>Jugabilidad: ${voto.jugabilidad}</p>
+                    <p>Arte: ${voto.arte}</p>
+                    <p>Sonido:${voto.sonido}</p>
+                    <p>Adinidad a la tematica ${voto.afinidad_a_la_tematica}</p>
+                    <h2>Total ${voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica}</h2>
+                    ${juezEncontrado ? `<div class="productos"><h2>Juez: ${juezEncontrado.nombre}</h2></div>` : ''}
+                </li>
+            `;
+        }).join('');
+
+        if (votosJuego.length === 0) {
+            votosJuego = '<li>No hay votos</li>';
+        }
 
         // Enviar la respuesta después de que ambas operaciones asíncronas hayan completado
         res.send(`
@@ -151,6 +160,9 @@ async function modificarPatchController(req, res) {
         .catch(function (err) {
             res.status(500).json({msg: "ta' re quebrado tu  codigo", err})
         })
+    })
+    .catch(function (err) {
+        res.status(400).json({msg: err})
     })
 }
 

@@ -40,29 +40,40 @@ function traerJuecesPorIdController(req, res) {
 
     Promise.all([
         datosServicios.getDatosById(datosServicios.jueces, req.params.id),
-        serviciosVotos.getDatosVotosPorJuez(req.params.id)
+        serviciosVotos.getDatosVotosPorJuez(req.params.id),
+        datosServicios.getDatos(datosServicios.juegos)
     ])
     .then(function (results) {
         const product = results[0];
         const votos = results[1];
+        const juegos = results[2];
 
         jueces = `
             <div class="productos">
                 <h1>Juez: ${product.nombre}</h1>
             </div>
         `;
-        
-        votosJuego = votos.map(voto => `
+
+        votosJuego = votos.map(voto => {
+            const juegoEncontrado = juegos.find(juego => juego._id == voto.id_juego);
+            return `
             <li style="width:200px; list-style:none">
-                <p>Juego: nombre</p>
+                ${juegoEncontrado ? `<div class="productos"><h2>Juez: ${juegoEncontrado.name}</h2></div>` : 'juego no encontrado'}
                 <p>Jugabilidad: ${voto.jugabilidad}</p>
                 <p>Arte: ${voto.arte}</p>
                 <p>Sonido:${voto.sonido}</p>
-                <p>Adinidad a la temaica ${voto.afinidad_a_la_tematica}</p>
+                <p>Adinidad a la temática ${voto.afinidad_a_la_tematica}</p>
                 <a href="/games/${voto.id_juego}">Ver mas</a>
             </li>
+            `;
+        }).join('');
 
-        `).join('');;
+
+
+
+        if(votosJuego.length == 0){
+            votosJuego = `<p>Este juez no tiene votos</p>`
+        }
 
         res.send(`
         <!DOCTYPE html>

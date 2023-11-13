@@ -16,6 +16,7 @@ route.get('/games/:id',[accedio] , juegosController.traerJuegosPorIdController);
 //Modificamos un juego
 route.patch('/games/:id', [accedio], juegosController.modificarPatchController);
 
+
 //Eliminamos un juego
 route.delete('/games/:id', [accedio], juegosController.eliminarJuegoController);
 

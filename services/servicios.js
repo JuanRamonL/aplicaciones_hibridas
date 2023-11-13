@@ -53,12 +53,9 @@ async function getDatosById(datoDB, id){
 
 async function addDatos(db, datos) {
     try {
-        await client.connect();
-
-        const count = await db.countDocuments();
+        await client.connect()
 
         const nuevoDato = {
-            id: count + 1, 
             ...datos
         };
         await db.insertOne(nuevoDato);
@@ -70,21 +67,31 @@ async function addDatos(db, datos) {
 }
 
 async function modificarDatosPatch(db, id, datos) {
-    await client.connect()
+    try {
+        await client.connect();
 
-    const buscarId = await db.findOne({ _id: ObjectId(id) })
+        const buscarId = await db.findOne({ _id: new ObjectId(id) });
 
-    const nuevoDato = {
-        ...buscarId,
-        ...datos
+        if (!buscarId) {
+            throw { status: 404, message: 'Documento no encontrado' };
+        }
+
+        console.log('Documento encontrado:', buscarId);
+
+        const nuevoDato = { ...buscarId, ...datos };
+
+        await db.updateOne({ _id: new ObjectId(id) }, { $set: datos });
+
+        console.log('Documento actualizado:', nuevoDato);
+
+        return nuevoDato;
+    } catch (error) {
+        console.error('Error:', error);
+        throw { status: 500, message: 'Error al modificar el documento', error };
+    } finally {
+        await client.close();
+        console.log('Conexión cerrada correctamente');
     }
-    
-    if (buscarId) {
-        await db.updateOne({ _id: ObjectId(id) }, { $set: nuevoDato })
-    }
-
-    return nuevoDato
-
 }
 
 //Funcion que agrega un estado a uno producto como eliminado

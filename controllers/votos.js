@@ -13,7 +13,6 @@ function TraerVotosController(req, res) {
     })
 }
 
-
 function AgregarVotosController(req, res) {
     const { id } = req.params;
 
