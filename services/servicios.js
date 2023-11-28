@@ -51,6 +51,11 @@ async function getDatosById(datoDB, id){
     return datoDB.findOne({ _id: new ObjectId(id) })
 }
 
+async function getDatosByEdition(datoDB, edition) {
+    const filterMongo = { "edition": edition };  // Filtrar por el campo "edition"
+    return datoDB.find(filterMongo).toArray();
+}
+
 async function addDatos(db, datos) {
     try {
         await client.connect()
@@ -96,14 +101,20 @@ async function modificarDatosPatch(db, id, datos) {
 
 //Funcion que agrega un estado a uno producto como eliminado
 async function eliminarDatos(db, id) {
-    await client.connect()
-    const datos = await db.findOne({ _id: ObjectId(id) })
-    
-    if (datos) {
-        await db.updateOne({ _id: ObjectId(id) }, { $set: { estado: 'eliminado' } })
+    try {
+        const datos = await db.findOne({ _id: new ObjectId(id) });
+
+        if (!datos) {
+            throw { status: 404, message: 'No se encontró el juego para eliminar' };
+        }
+
+        await db.deleteOne({ _id: new ObjectId(id) });
+        console.log('Juego eliminado:');
+        return ('Eliminaste el juego: ' + datos.name );
+    } catch (error) {
+        console.error('Error:', error);
+        throw { status: 500, message: 'Error al eliminar el juego', error };
     }
-    
-    return datos
 }
 
 export {
@@ -112,6 +123,7 @@ export {
     getDatosById,
     modificarDatosPatch,
     eliminarDatos,
+    getDatosByEdition,
     juegos,
     jueces,
 }
@@ -122,6 +134,7 @@ export default {
     getDatosById,
     modificarDatosPatch,
     eliminarDatos,
+    getDatosByEdition,
     juegos,
     jueces,
 }

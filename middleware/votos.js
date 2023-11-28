@@ -20,3 +20,7 @@ export function accedio(req, res, next) {
     next();
 }
 
+export default { 
+    validarDatosVotos, 
+    accedio 
+}

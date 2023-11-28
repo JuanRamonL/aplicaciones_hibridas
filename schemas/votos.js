@@ -6,6 +6,7 @@ export const schemaCrear = yup.object().shape({
     arte: yup.number().required(),  
     sonido: yup.number().required(),
     afinidad_a_la_tematica: yup.number().required(),
+    id_juego: yup.string().min(24,"Esto no es un Id valido").max(24,"Esto no es un Id valido").required(),
 })
 
 export default {

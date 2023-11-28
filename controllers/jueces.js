@@ -2,35 +2,9 @@ import datosServicios from '../services/servicios.js';
 import serviciosVotos from '../services/serviciosVotos.js';
 
 function TraerJuecesController(req, res) {
-    datosServicios.getDatos(datosServicios.jueces , req.query)
+    datosServicios.getDatos(datosServicios.jueces, req.query)
     .then(function (jueces) {
-        let lista = '<ul> ' 
-        for(let i = 0; i < jueces.length; i++) {
-            lista += `
-            <li>
-                <ul>
-                    <li>Nombre: ${jueces[i].nombre}</li>
-                    <a href="/judges/${jueces[i]._id}">Ver mas</a>
-                </ul> 
-            </li>`
-        }
-        lista += '</ul>'
-
-        res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Mi web</title>
-            <link rel="stylesheet" href="CSS/style.css">
-        </head>
-        <body>
-                ${lista}
-        </body>
-        </html>
-        `)
-        
+        res.json(jueces);
     })
 }
 
@@ -48,49 +22,31 @@ function traerJuecesPorIdController(req, res) {
         const votos = results[1];
         const juegos = results[2];
 
-        jueces = `
-            <div class="productos">
-                <h1>Juez: ${product.nombre}</h1>
-            </div>
-        `;
+        jueces = {
+            nombre: product.nombre
+        };
 
         votosJuego = votos.map(voto => {
             const juegoEncontrado = juegos.find(juego => juego._id == voto.id_juego);
-            return `
-            <li style="width:200px; list-style:none">
-                ${juegoEncontrado ? `<div class="productos"><h2>Juez: ${juegoEncontrado.name}</h2></div>` : 'juego no encontrado'}
-                <p>Jugabilidad: ${voto.jugabilidad}</p>
-                <p>Arte: ${voto.arte}</p>
-                <p>Sonido:${voto.sonido}</p>
-                <p>Adinidad a la temática ${voto.afinidad_a_la_tematica}</p>
-                <a href="/games/${voto.id_juego}">Ver mas</a>
-            </li>
-            `;
-        }).join('');
+            return {
+                juego: juegoEncontrado ? juegoEncontrado.name : 'juego no encontrado',
+                id: voto.id_juego,
+                jugabilidad: voto.jugabilidad,
+                arte: voto.arte,
+                sonido: voto.sonido,
+                afinidad_a_la_tematica: voto.afinidad_a_la_tematica,
+                Promedio: (voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica) / 4,
+            };
+        });
 
-
-
-
-        if(votosJuego.length == 0){
-            votosJuego = `<p>Este juez no tiene votos</p>`
+        if (votosJuego.length == 0) {
+            votosJuego = [];
         }
 
-        res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Mi web</title>
-            <link rel="stylesheet" href="CSS/style.css">
-        </head>
-        <body>
-            ${jueces}
-            <ul style="display:flex;">
-            ${votosJuego}
-            </ul>
-        </body>
-        </html>
-        `)
+        res.json({
+            jueces: jueces,
+            votos_a_Juegos: votosJuego
+        });
     })
 }
 

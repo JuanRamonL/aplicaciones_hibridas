@@ -1,57 +1,65 @@
-import yup from 'yup';
+
 import datosServicios from '../services/servicios.js';
 import serviciosVotos from '../services/serviciosVotos.js';
 
-const schema = yup.object().shape({
-    name: yup.string().min(5,"Ponele voluntad, son 4 caracteres minimo").max(256,"Te fuiste a narnia, son 256 caracteres como maximo").required(),
-    genre: yup.string().min(5,"Ponele voluntad, son 4 caracteres minimo").max(256,"Te fuiste a narnia, son 256 caracteres como maximo").required(),
-    members: yup.array().of(yup.string().min(2,"Ponele voluntad, son 2 caracteres minimo").max(256,"Te fuiste a narnia, son 256 caracteres como maximo").required()),
-    edition: yup.string().required(),
-})
-
-const modificar = yup.object().shape({
-    name: yup.string().min(5,"Ponele voluntad, son 4 caracteres minimo").max(256,"Te fuiste a narnia, son 256 caracteres como maximo"),
-    genre: yup.string().min(5,"Ponele voluntad, son 4 caracteres minimo").max(256,"Te fuiste a narnia, son 256 caracteres como maximo"),
-    members: yup.array().of(yup.string().min(2,"Ponele voluntad, son 2 caracteres minimo").max(256,"Te fuiste a narnia, son 256 caracteres como maximo")),
-    edition: yup.string(),
-})
 
 function traerJuegosController(req, res) {
-    
-    datosServicios.getDatos(datosServicios.juegos , req.query)
-    .then(function (products) {
-        let lista = '<ul> ' 
-        for(let i = 0; i < products.length; i++) {
-            lista += `
-            <li>
-                <ul>    
-                    <li>Nombre: ${products[i].name}</li>
-                    <li>Genero: ${products[i].genre}</li>
-                    <li>Miembros: ${products[i].members}</li>
-                    <li>Edicion: ${products[i].edition}</li>
-                    <a href="/games/${products[i]._id}">Ver mas</a>
-                </ul>
-            </li>`
-        }
-        lista += '</ul>'
+    datosServicios.getDatos(datosServicios.juegos, req.query)
+        .then(function (juegos) {
+            const promesasVotos = juegos.map(async juego => {
 
-        res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Mi web</title>
-            <link rel="stylesheet" href="CSS/style.css">
-        </head>
-        <body>
-                ${lista}
-        </body>
-        </html>
-        `)
-        
-    })
+                const id = (juego._id).toString();
+                
+
+                const votes = await serviciosVotos.getDatosVotos(id);
+
+                //console.log("Votos:", votos);
+                console.log(id)
+                return {
+                    juego: juego,
+                    votos: votes
+                };
+            });
+            return Promise.all(promesasVotos);
+        })
+        .then(function (juegosConVotos) {
+            const resultadoFinal = juegosConVotos.map(item => {
+                const juegoInfo = {
+                    name: item.juego.name,
+                    genre: item.juego.genre,
+                    edition: item.juego.edition,
+                    members: item.juego.members
+                };
+
+                const votosJuego = item.votos.map(voto => {
+                    return {
+                        id_juez: voto.id_juez,
+                        id_voto: voto._id,
+                        jugabilidad: voto.jugabilidad,
+                        arte: voto.arte,
+                        sonido: voto.sonido,
+                        afinidad_a_la_tematica: voto.afinidad_a_la_tematica,
+                        Promedio: (voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica) / 4
+                    };
+                });
+
+                return {
+                    juego: juegoInfo,
+                    votos: votosJuego
+                };
+            });
+
+            res.json(resultadoFinal);
+        })
+        .catch(function (err) {
+            if (err?.code) {
+                res.status(err.code).json({ msg: err.msg });
+            } else {
+                res.status(500).json({ msg: "ta' re quebrado tu código" });
+            }
+        });
 }
+
 
 function traerJuegosPorIdController(req, res) {
     let juego, votosJuego = '';
@@ -66,54 +74,38 @@ function traerJuegosPorIdController(req, res) {
         const votos = results[1];
         const jueces = results[2];
 
-        juego = `
-            <div class="productos">
-                <h1>Juego: ${product.name}</h1>
-                <p>Genero: <b>${product.genre}</b></p>
-                <p>Edición: <b>${product.edition}</b></p>
-                <p>Miembros: ${product.members}</p>
-            </div>
-        `;
+        juego = {
+            name: product.name,
+            genre: product.genre,
+            edition: product.edition,
+            members: product.members
+        };
         
-        // Construir el HTML para los votos
+        // Construir el objeto para los votos
         votosJuego = votos.map(voto => {
             const juezEncontrado = jueces.find(juez => juez._id == voto.id_juez);
 
-            return `
-                <li style="width:200px; list-style:none">
-                    <p>Juez: ${voto.id_juez}</p>
-                    <p>Jugabilidad: ${voto.jugabilidad}</p>
-                    <p>Arte: ${voto.arte}</p>
-                    <p>Sonido:${voto.sonido}</p>
-                    <p>Adinidad a la tematica ${voto.afinidad_a_la_tematica}</p>
-                    <h2>Total ${voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica}</h2>
-                    ${juezEncontrado ? `<div class="productos"><h2>Juez: ${juezEncontrado.nombre}</h2></div>` : ''}
-                </li>
-            `;
-        }).join('');
+            return {
+                id_juez: voto.id_juez,
+                nombre_juez: juezEncontrado ? juezEncontrado.nombre : null,
+                id_voto: voto._id,
+                jugabilidad: voto.jugabilidad,
+                arte: voto.arte,
+                sonido: voto.sonido,
+                afinidad_a_la_tematica: voto.afinidad_a_la_tematica,
+                Promedio: (voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica) / 4
+            };
+        });
 
         if (votosJuego.length === 0) {
-            votosJuego = '<li>No hay votos</li>';
+            votosJuego = [];
         }
 
-        // Enviar la respuesta después de que ambas operaciones asíncronas hayan completado
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Mi web</title>
-                    <link rel="stylesheet" href="CSS/style.css">
-                </head>
-                <body>
-                    ${juego}
-                    <ul style="display:flex;">
-                    ${votosJuego}
-                    </ul>
-                </body>
-            </html>
-        `);
+        // Enviar la respuesta como JSON
+        res.json({
+            juego: juego,
+            votos: votosJuego
+        });
     })
     .catch(function (err) {
         if (err?.code) {
@@ -124,60 +116,58 @@ function traerJuegosPorIdController(req, res) {
     });
 }
 
+async function traerJuegosPoreditionController(req, res) {
+    try {
+        const edition = req.params.edition;
+        console.log("Edition:", edition);
 
-function agregarPostController(req, res) {
+        const products = await datosServicios.getDatosByEdition(datosServicios.juegos, parseInt(edition)); // Parsea a entero si es necesario
 
-    schema.validate(req.body, {
-        stripUnknown: true,
-        abortEarly: true
-    })
-    .then(async function (value) {
-        return datosServicios.addDatos(datosServicios.juegos, value)
-        .then(function (product) {
-            return res.status(200).json(product)
-        })
-        .catch(function (err) {
-            res.status(500).json({msg: "ta' re quebrado tu  codigo", err})
-        })
-    })
-    .catch(function (err) {
-        res.status(400).json({msg: err})
-    })
-    
+        
+
+        if (products.length === 0) {
+            res.status(404).json({ msg: "No se encontraron juegos para la edición especificada." });
+        } else {
+            res.json(products);
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ err: err.message });
+    }
+}
+
+
+async function agregarPostController(req, res) {
+    try {
+        const value = req.body;
+        const product = await datosServicios.addDatos(datosServicios.juegos, value);
+        return res.status(200).json(product);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "ta' re quebrado tu codigo", err });
+    }
 }
 
 async function modificarPatchController(req, res) {
-
-    modificar.validate(req.body, {
-        stripUnknown: true,
-        abortEarly: true
-    })
-    .then(async function (value) {
-        return datosServicios.modificarDatosPatch(datosServicios.juegos, req.params.id, value)
-        .then(function (product) {
-            return res.status(200).json(product)
-        })
-        .catch(function (err) {
-            res.status(500).json({msg: "ta' re quebrado tu  codigo", err})
-        })
-    })
-    .catch(function (err) {
-        res.status(400).json({msg: err})
-    })
+    try {
+        const value = req.body;
+        const product = await datosServicios.modificarDatosPatch(datosServicios.juegos, req.params.id, value);
+        return res.status(200).json(product);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "ta' re quebrado tu codigo", err });
+    }
 }
 
 
-function eliminarJuegoController(req, res) {
-
-    datosServicios.eliminarDatos(datosServicios.juegos, req.params.id)
-    .then(function (product) {
-        return res.status(200).json(product)
-    })
-    .catch(function (err) {
-        res.status(500).json({msg: "ta' re quebrado tu  codigo", err})
-    })
+async function eliminarJuegoController(req, res) {
+    try {
+        const product = await datosServicios.eliminarDatos(datosServicios.juegos, req.params.id);
+        return res.status(200).json(product);
+    } catch (err) {
+        res.status(500).json({ msg: "ta' re quebrado tu código", err });
+    }
 }
-
 
 
 export {
@@ -185,7 +175,8 @@ export {
     traerJuegosPorIdController,
     agregarPostController,
     modificarPatchController,
-    eliminarJuegoController
+    eliminarJuegoController,
+    traerJuegosPoreditionController
 }
 
 export default {
@@ -193,5 +184,6 @@ export default {
     traerJuegosPorIdController,
     agregarPostController,
     modificarPatchController,
-    eliminarJuegoController
+    eliminarJuegoController,
+    traerJuegosPoreditionController
 }
