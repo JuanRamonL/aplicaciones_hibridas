@@ -121,15 +121,45 @@ async function traerJuegosPoreditionController(req, res) {
         const edition = req.params.edition;
         console.log("Edition:", edition);
 
-        const products = await datosServicios.getDatosByEdition(datosServicios.juegos, parseInt(edition)); // Parsea a entero si es necesario
+        const juegos = await datosServicios.getDatosByEdition(datosServicios.juegos, parseInt(edition));
 
-        
-
-        if (products.length === 0) {
+        if (juegos.length === 0) {
             res.status(404).json({ msg: "No se encontraron juegos para la edición especificada." });
-        } else {
-            res.json(products);
+            return;
         }
+
+        const promesasVotos = juegos.map(async juego => {
+            const id = juego._id.toString();
+            const votes = await serviciosVotos.getDatosVotos(id);
+
+            const juegoInfo = {
+                name: juego.name,
+                genre: juego.genre,
+                edition: juego.edition,
+                members: juego.members
+            };
+
+            const votosJuego = votes.map(voto => {
+                return {
+                    id_juez: voto.id_juez,
+                    id_voto: voto._id,
+                    jugabilidad: voto.jugabilidad,
+                    arte: voto.arte,
+                    sonido: voto.sonido,
+                    afinidad_a_la_tematica: voto.afinidad_a_la_tematica,
+                    Promedio: (voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica) / 4
+                };
+            });
+
+            return {
+                juego: juegoInfo,
+                votos: votosJuego
+            };
+        });
+
+        const juegosConVotos = await Promise.all(promesasVotos);
+
+        res.json(juegosConVotos);
     } catch (err) {
         console.error(err);
         res.status(500).json({ err: err.message });
