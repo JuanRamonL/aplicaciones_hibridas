@@ -56,6 +56,12 @@ async function getDatosByEdition(datoDB, edition) {
     return datoDB.find(filterMongo).toArray();
 }
 
+async function getDatosByGenreAndEdition(datoDB,  edition, genre) {
+    const filterMongo = { "edition": edition, "genre": genre };  // Filtrar por el campo "genre" y "edition"
+    return datoDB.find(filterMongo).toArray();
+}
+
+
 async function addDatos(db, datos) {
     try {
         await client.connect()
@@ -124,6 +130,7 @@ export {
     modificarDatosPatch,
     eliminarDatos,
     getDatosByEdition,
+    getDatosByGenreAndEdition,
     juegos,
     jueces,
 }
@@ -135,6 +142,7 @@ export default {
     modificarDatosPatch,
     eliminarDatos,
     getDatosByEdition,
+    getDatosByGenreAndEdition,
     juegos,
     jueces,
 }

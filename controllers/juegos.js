@@ -151,7 +151,7 @@ async function traerJuegosPoreditionController(req, res) {
                 };
             });
 
-            const promedioTotal = votosJuego.reduce((acc, voto) => acc + voto.Promedio, 0) / votosJuego.length;
+            const promedioTotal = votosJuego.reduce((reducir, voto) => reducir + voto.Promedio, 0) / votosJuego.length;
 
             return {
                 juego: juegoInfo,
@@ -162,6 +162,66 @@ async function traerJuegosPoreditionController(req, res) {
 
         const juegosConVotos = await Promise.all(promesasVotos);
 
+        // Ordenar los juegos de mayor a menor según la PuntuacionDelJuego
+        juegosConVotos.sort((a, b) => b.PuntuacionDelJuego - a.PuntuacionDelJuego);
+
+        res.json(juegosConVotos);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ err: err.message });
+    }
+}
+
+async function traerJueegosPorGeneroYEdicionController(req, res) {
+    try {
+        const genero = req.params.genre;
+        const edicion = parseInt(req.params.edition);
+        console.log("genero:", genero);
+        console.log("edition:", edicion);
+
+        const juegos = await datosServicios.getDatosByGenreAndEdition(datosServicios.juegos,  edicion, genero);
+
+        if (juegos.length == 0) {
+            res.status(404).json({ msg: "No se encontraron juegos para el género ("+ genero+") y la edición ("+ edicion +") especificada." });
+            return;
+        }
+
+        const promesasVotos = juegos.map(async juego => {
+            const id = juego._id.toString();
+            const votes = await serviciosVotos.getDatosVotos(id);
+
+            const juegoInfo = {
+                name: juego.name,
+                genre: juego.genre,
+                edition: juego.edition,
+                members: juego.members
+            };
+
+            const votosJuego = votes.map(voto => {
+                return {
+                    id_juez: voto.id_juez,
+                    id_voto: voto._id,
+                    jugabilidad: voto.jugabilidad,
+                    arte: voto.arte,
+                    sonido: voto.sonido,
+                    afinidad_a_la_tematica: voto.afinidad_a_la_tematica,
+                    Promedio: (voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica) / 4,
+                };
+            });
+
+            const promedioTotal = votosJuego.reduce((reducir, voto) => reducir + voto.Promedio, 0) / votosJuego.length;
+
+            return {
+                juego: juegoInfo,
+                votos: votosJuego,
+                PuntuacionDelJuego: promedioTotal
+            };
+        });
+
+        const juegosConVotos = await Promise.all(promesasVotos);
+
+        juegosConVotos.sort((a, b) => b.PuntuacionDelJuego - a.PuntuacionDelJuego);
+        
         res.json(juegosConVotos);
     } catch (err) {
         console.error(err);
@@ -209,7 +269,9 @@ export {
     agregarPostController,
     modificarPatchController,
     eliminarJuegoController,
-    traerJuegosPoreditionController
+    traerJuegosPoreditionController,
+    traerJueegosPorGeneroYEdicionController,
+
 }
 
 export default {
@@ -218,5 +280,6 @@ export default {
     agregarPostController,
     modificarPatchController,
     eliminarJuegoController,
-    traerJuegosPoreditionController
+    traerJuegosPoreditionController,
+    traerJueegosPorGeneroYEdicionController,
 }
