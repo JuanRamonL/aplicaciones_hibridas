@@ -147,13 +147,16 @@ async function traerJuegosPoreditionController(req, res) {
                     arte: voto.arte,
                     sonido: voto.sonido,
                     afinidad_a_la_tematica: voto.afinidad_a_la_tematica,
-                    Promedio: (voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica) / 4
+                    Promedio: (voto.jugabilidad + voto.arte + voto.sonido + voto.afinidad_a_la_tematica) / 4,
                 };
             });
 
+            const promedioTotal = votosJuego.reduce((acc, voto) => acc + voto.Promedio, 0) / votosJuego.length;
+
             return {
                 juego: juegoInfo,
-                votos: votosJuego
+                votos: votosJuego,
+                PuntuacionDelJuego: promedioTotal
             };
         });
 

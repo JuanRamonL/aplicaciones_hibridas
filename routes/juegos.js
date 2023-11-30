@@ -15,10 +15,10 @@ route.post('/games',[middlewareJuegos.schemaMiddleware], juegosController.agrega
 route.get('/games/:id',[accedio] , juegosController.traerJuegosPorIdController);
 
 //Mostrar un juego por su genre
-route.get('/games/edition/:edition', [accedio, middlewareJuegos.modificarMiddleware], juegosController.traerJuegosPoreditionController);
+route.get('/games/edition/:edition', [accedio], juegosController.traerJuegosPoreditionController);
 
 //Modificamos un juego
-route.patch('/games/:id/modificar', [accedio], juegosController.modificarPatchController);
+route.patch('/games/:id/modificar', [accedio, middlewareJuegos.modificarMiddleware], juegosController.modificarPatchController);
 
 //Eliminamos un juego
 route.delete('/games/:id/eliminar', [accedio], juegosController.eliminarJuegoController);
